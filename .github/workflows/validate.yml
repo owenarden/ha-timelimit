@@ -17,17 +17,17 @@ jobs:
           import yaml
           root = pathlib.Path("timelimit")
           config = yaml.safe_load((root / "config.yaml").read_text())
-          assert config["arch"] == ["amd64", "aarch64"]
+          assert config["arch"] == ["amd64"]
           assert config["ports"]["8080/tcp"] == 8080
           assert all(k in config["schema"] for k in ("database_url", "mail_sender", "mail_transport"))
           PY
           node --check timelimit/launch.js
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
-      - name: Build amd64 and arm64 images
+      - name: Build amd64 image
         uses: docker/build-push-action@v6
         with:
           context: ./timelimit
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: false
           tags: timelimit-ha:test

@@ -1,0 +1,51 @@
+name: Smoke test server startup
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  fresh-database:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: rootpass
+          MARIADB_DATABASE: timelimit
+          MARIADB_USER: timelimit
+          MARIADB_PASSWORD: testpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build wrapper
+        run: docker build -t timelimit-ha:test timelimit
+      - name: Start and restart against MariaDB
+        run: |
+          mkdir -p /tmp/timelimit-options
+          cat > /tmp/timelimit-options/options.json <<'JSON'
+          {"database_url":"mariadb://timelimit:testpass@127.0.0.1:3306/timelimit","always_pro":true}
+          JSON
+          for phase in fresh restart; do
+            docker run -d --name timelimit-test --network host -v /tmp/timelimit-options:/data:ro timelimit-ha:test
+            success=false
+            for attempt in $(seq 1 30); do
+              if curl -sS -o /dev/null http://127.0.0.1:8080/; then
+                success=true
+                break
+              fi
+              if [ "$(docker inspect -f '{{.State.Running}}' timelimit-test)" = false ]; then
+                break
+              fi
+              sleep 2
+            done
+            docker logs timelimit-test
+            docker rm -f timelimit-test
+            if [ "$success" != true ]; then
+              exit 1
+            fi
+          done
