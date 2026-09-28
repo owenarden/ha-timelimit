@@ -10,7 +10,7 @@ Set `database_url` to `mariadb://timelimit:<URL-encoded-password>@core-mariadb:3
 
 ## Mail
 
-Set `mail_sender` to your sender address and `mail_transport` to the JSON transport object supported by TimeLimit and your SMTP provider, for example `{"host":"smtp.example.org","port":587,"secure":false,"auth":{"user":"account","pass":"secret"}}`. This value contains credentials and is stored in Supervisor add-on options. Configure a working mail transport before using account recovery or invitations.
+Mail is optional for server startup, but email sign-in and account recovery need it. Set `mail_sender` to your sender address and `mail_transport` to the JSON transport object supported by TimeLimit and your SMTP provider, for example `{"host":"smtp.example.org","port":587,"secure":false,"auth":{"user":"account","pass":"secret"}}`. This value contains credentials and is stored in Supervisor add-on options. Without a working mail transport, login codes cannot be delivered.
 
 ## Clients and access
 
