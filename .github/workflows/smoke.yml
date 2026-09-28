@@ -25,16 +25,16 @@ jobs:
       - name: Build wrapper and inspect migrations
         run: |
           docker build -t timelimit-ha:test timelimit
-          docker run --rm --entrypoint sh timelimit-ha:test -c 'find /usr/src/app/build/database/migration -maxdepth 2 -type f | head -30'
+          docker run --rm --entrypoint sh timelimit-ha:test -c 'ls /usr/src/app/build/database/migration/migrations/*.js | wc -l; sed -n "1,100p" /usr/src/app/build/database/migration/umzug.js'
       - name: Start against a fresh database
         run: |
           mkdir -p /tmp/timelimit-options
           cat > /tmp/timelimit-options/options.json <<'JSON'
           {"database_url":"mariadb://timelimit:testpass@127.0.0.1:3306/timelimit","always_pro":true}
           JSON
-          docker run --rm --network host -v /tmp/timelimit-options:/data:ro timelimit-ha:test &
+          docker run --rm --network host -e DB_DRIVER=mariadb -e DB_HOST=127.0.0.1 -e DB_USER=timelimit -e DB_PASS=testpass -e DB_NAME=timelimit --entrypoint node timelimit-ha:test -e 'require("./build/database/main.js").defaultUmzug.pending().then(m => console.log("PENDING_MIGRATIONS", m.length, m.slice(0, 3))).catch(console.error)'\n          docker run --rm --network host -v /tmp/timelimit-options:/data:ro timelimit-ha:test &
           server_pid=$!
           sleep 20
-          curl -fsS http://127.0.0.1:8080/ || true
+          curl -fsS http://127.0.0.1:8080/
           kill "$server_pid" || true
           wait "$server_pid" || true
