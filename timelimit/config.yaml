@@ -1,0 +1,25 @@
+name: TimeLimit Server
+slug: timelimit
+description: Connected-mode TimeLimit server
+version: 0.1.0
+arch:
+  - amd64
+  - aarch64
+startup: application
+boot: auto
+init: false
+ports:
+  8080/tcp: 8080
+ports_description:
+  8080/tcp: TimeLimit client API and web interface
+webui: http://[HOST]:[PORT:8080]
+options:
+  database_url: ""
+  mail_sender: ""
+  mail_transport: ""
+  always_pro: true
+schema:
+  database_url: password
+  mail_sender: str
+  mail_transport: str
+  always_pro: bool
