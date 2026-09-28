@@ -1,7 +1,7 @@
 name: TimeLimit Server
 slug: timelimit
 description: Connected-mode TimeLimit server
-version: 0.1.0
+version: 0.1.1
 arch:
   - amd64
   - aarch64
@@ -20,6 +20,6 @@ options:
   always_pro: true
 schema:
   database_url: password
-  mail_sender: str
-  mail_transport: str
+  mail_sender: str?
+  mail_transport: str?
   always_pro: bool
