@@ -1,7 +1,7 @@
 name: TimeLimit Server
 slug: timelimit
 description: Connected-mode TimeLimit server
-version: 0.1.1
+version: 0.1.2
 arch:
   - amd64
   - aarch64
@@ -15,8 +15,6 @@ ports_description:
 webui: http://[HOST]:[PORT:8080]
 options:
   database_url: ""
-  mail_sender: ""
-  mail_transport: ""
   always_pro: true
 schema:
   database_url: password
