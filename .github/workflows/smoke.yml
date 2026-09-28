@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build wrapper
-        run: docker build -t timelimit-ha:test timelimit
+        run: |\n          docker build -t timelimit-ha:test timelimit\n          docker run --rm --entrypoint sh timelimit-ha:test -c 'sed -n "20,50p" /usr/src/app/build/database/migration/migrations/20181014-setup-tables.js; sed -n "20,50p" /usr/src/app/build/database/migration/umzug.js'
       - name: Start against a fresh database
         run: |
           mkdir -p /tmp/timelimit-options
