@@ -22,19 +22,25 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
       - uses: actions/checkout@v4
-      - name: Build wrapper and inspect migrations
-        run: |
-          docker build -t timelimit-ha:test timelimit
-          docker run --rm --entrypoint sh timelimit-ha:test -c 'ls /usr/src/app/build/database/migration/migrations/*.js | wc -l; sed -n "1,100p" /usr/src/app/build/database/migration/umzug.js'
+      - name: Build wrapper
+        run: docker build -t timelimit-ha:test timelimit
       - name: Start against a fresh database
         run: |
           mkdir -p /tmp/timelimit-options
           cat > /tmp/timelimit-options/options.json <<'JSON'
           {"database_url":"mariadb://timelimit:testpass@127.0.0.1:3306/timelimit","always_pro":true}
           JSON
-          docker run --rm --network host -e DB_DRIVER=mariadb -e DB_HOST=127.0.0.1 -e DB_USER=timelimit -e DB_PASS=testpass -e DB_NAME=timelimit --entrypoint node timelimit-ha:test -e 'require("./build/database/main.js").defaultUmzug.pending().then(m => console.log("PENDING_MIGRATIONS", m.length, m.slice(0, 3))).catch(console.error)'\n          docker run --rm --network host -v /tmp/timelimit-options:/data:ro timelimit-ha:test &
-          server_pid=$!
-          sleep 20
-          curl -fsS http://127.0.0.1:8080/
-          kill "$server_pid" || true
-          wait "$server_pid" || true
+          docker run -d --name timelimit-test --network host -v /tmp/timelimit-options:/data:ro timelimit-ha:test
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/ > /dev/null; then
+              docker logs timelimit-test
+              exit 0
+            fi
+            if [ "$(docker inspect -f '{{.State.Running}}' timelimit-test)" = false ]; then
+              docker logs timelimit-test
+              exit 1
+            fi
+            sleep 2
+          done
+          docker logs timelimit-test
+          exit 1
